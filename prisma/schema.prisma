@@ -1,0 +1,143 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["createMany"]
+}
+
+model User {
+  id         String      @id @default(uuid())
+  email      String      @unique
+  username   String      @unique
+  authInfo   AuthInfo?
+  account    Account?
+  leagueInfo LeagueInfo?
+  reviews    Review[]
+}
+
+model AuthInfo {
+  id           String @id @default(uuid())
+  passwordHash String
+  userId       String
+  user         User   @relation(fields: [userId], references: [id])
+}
+
+model Account {
+  id            String  @id @default(uuid())
+  summonerId    String // mark
+  accountId     String // mark
+  puuid         String
+  name          String // mark
+  profileIconId Int // mark
+  summonerLevel Int     @default(1)
+  region        String // mark: platform
+  userId        String?
+  user          User?   @relation(fields: [userId], references: [id])
+}
+
+model LeagueInfo {
+  id           String  @id @default(uuid())
+  queueType    String
+  tier         String
+  rank         String
+  leaguePoints Int
+  wins         Int
+  losses       Int
+  veteran      Boolean
+  inactive     Boolean
+  freshBlood   Boolean
+  hotStreak    Boolean
+  userId       String?
+  user         User?   @relation(fields: [userId], references: [id])
+}
+
+model Match {
+  gameId          BigInt   @id
+  platformId      String
+  creationDateGMT DateTime
+  durationTime    Int
+  queueId         Int
+  mapId           Int
+  seasonId        Int
+  gameVersion     String
+  gameMode        String
+  gameType        String
+  teams           Team[]
+  reviews         Review[]
+}
+
+model Team {
+  id                  String        @id @default(uuid())
+  hasWon              Boolean
+  drewFirstBlood      Boolean
+  brokeFirstTower     Boolean
+  brokeFirstInhibitor Boolean
+  killedFirstBaron    Boolean
+  killedFirstDragon   Boolean
+  towerKills          Int
+  inhibitorKills      Int
+  baronKills          Int
+  dragonKills         Int
+  riftHeraldKills     Int
+  bans                Ban[]
+  participants        Participant[]
+  matchId             BigInt?
+  match               Match?        @relation(fields: [matchId], references: [gameId])
+}
+
+model Ban {
+  id         String  @id @default(uuid())
+  championId Int
+  pickTurn   Int
+  teamId     String?
+  team       Team?   @relation(fields: [teamId], references: [id])
+}
+
+model Participant {
+  id            String  @id @default(uuid())
+  participantId Int
+  championId    Int
+  spell1Id      Int
+  spell2Id      Int
+  item0         Int
+  item1         Int
+  item2         Int
+  item3         Int
+  item4         Int
+  item5         Int
+  item6         Int
+  kills         Int
+  deaths        Int
+  assists       Int
+  // statsId       String?
+  // stats         Stats?
+  teamId        String?
+  team          Team?   @relation(fields: [teamId], references: [id])
+}
+
+// model Stats {
+//   id            String       @id @default(uuid())
+
+//   participantId String?
+//   participant   Participant? @relation(fields: [participantId], references: [id])
+// }
+
+// model Identity {
+//   id String @id @default(uuid())
+
+// }
+
+model Review {
+  matchId    BigInt
+  match      Match    @relation(fields: [matchId], references: [gameId])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  reflection String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([matchId, userId])
+}
